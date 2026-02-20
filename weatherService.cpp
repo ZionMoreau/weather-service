@@ -78,24 +78,22 @@ int main() {
                 resultFile << weather.dump(4);
                 resultFile.close();
                 string response = "Success";
-                zmq::message_t reply(response.size());
-                memcpy(reply.data(), response.data(), response.size());
+                zmq::message_t reply(response.begin(), response.end());
                 socket.send(reply);
             }
             //if the file did not open properly. close it and send Failure to the zeroMQ socket
             else {
                 resultFile.close();
                 string response = "Failure";
-                zmq::message_t reply(response.size());
-                memcpy(reply.data(), response.data(), response.size());
+                zmq::message_t reply(response.begin(), response.end());
                 socket.send(reply);
             }
-        //if an exception was thrown send Failure to the cliend through the ZeroMQ socket
+        //if an exception was thrown send Failure to the client through the ZeroMQ socket
         } catch (const std::exception& e){
             string response = "Failure";
-            zmq::message_t reply(response.size());
-            memcpy(reply.data(), response.data(), response.size());
+            zmq::message_t reply(response.begin(), response.end());
             socket.send(reply);
+
         }
 
     }
