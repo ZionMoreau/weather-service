@@ -14,7 +14,7 @@ def test_weatherservice():
         choice = input("Please enter 1 to submit a location, or 2 to exit: ")
         if choice == "1":
             location = input("Please enter a location: ")
-            if isinstance(location, int):
+            if location.isdigit():
                 isZip = True
             else:
                 isZip = False
