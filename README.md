@@ -37,5 +37,6 @@ data_file = open("weatherData.json", "r")
 
 UML Sequence Diagram:
 
-<img width="920" height="828" alt="Screenshot 2026-02-23 143339" src="https://github.com/user-attachments/assets/942da90e-a771-4068-8c40-f464eff594f6" />
+
+<img width="941" height="923" alt="Screenshot 2026-03-05 124621" src="https://github.com/user-attachments/assets/27950ff5-7da5-4661-b322-341693904a3b" />
 
