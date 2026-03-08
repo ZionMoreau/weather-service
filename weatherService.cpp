@@ -9,7 +9,6 @@
 #include <cpr/cpr.h>
 #include <fstream>
 
-
 using json = nlohmann::json;
 using namespace std;
 //api key stored as an environment variable on windows because github gave me a warning for hardcoding it
@@ -19,11 +18,9 @@ const string API_KEY = std::getenv("OPENWEATHER_API_KEY");
 json getWeather(const std::string& location, const bool isZip){
     string url = "http://api.openweathermap.org/data/2.5/weather?";
     //if the user chose to use a zipcode, add the zipcode field to the api call
-    if(isZip) {
+    if (isZip) {
         url += "zip=" + location;
-    }
-    //if the user did not use a zip code, then add the city name field to the api call
-    else {
+    } else {
         url += "q=" + location;
     }
     //add the api key to the api call
@@ -31,11 +28,9 @@ json getWeather(const std::string& location, const bool isZip){
 
     //if the api call was successful return the parsed json file
     cpr::Response r = cpr::Get(cpr::Url{url});
-    if(r.status_code == 200) {
+    if (r.status_code == 200) {
         return json::parse(r.text);
-    }
-    //if the call was not successful return the error with the error code and message
-    else {
+    } else {
         return {
             {"error", "Failed to retrieve weather data"},
             {"status_code", r.status_code},
@@ -72,7 +67,6 @@ void handleZMQRequest(const std::string& request, zmq::socket_t& socket) {
     resultFile.close();
     sendZMQResponse("Success", socket);
 }
-
 
 int main() {
     //creates the zmq req/rep socket
