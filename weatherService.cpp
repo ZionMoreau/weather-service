@@ -11,10 +11,10 @@
 
 using json = nlohmann::json;
 using namespace std;
-//api key stored as an environment variable on windows because github gave me a warning for hardcoding it
-const string API_KEY = std::getenv("OPENWEATHER_API_KEY");
+const char* env_key = std::getenv("OPENWEATHER_API_KEY");
+const string API_KEY = (env_key != nullptr) ? string(env_key) : "";
 
-//function to call openweather api and returns the json from the api, or an error if the api call failed
+//fetches weather data from openweather api. Returns results in JSON containing data or error
 json getWeather(const std::string& location, const bool isZip){
     string url = "http://api.openweathermap.org/data/2.5/weather?";
     //if the user chose to use a zipcode, add the zipcode field to the api call
@@ -52,7 +52,7 @@ void handleZMQRequest(const std::string& request, zmq::socket_t& socket) {
 
     std::string location = jsonRequest["location"];
     bool isZip = jsonRequest["isZip"];
-    string fileName = jsonRequest["filename"];
+    string fileName = jsonRequest["fileName"];
 
     json weather = getWeather(location, isZip);
 
@@ -65,22 +65,22 @@ void handleZMQRequest(const std::string& request, zmq::socket_t& socket) {
     }
 
     resultFile.close();
-    sendZMQResponse("Success", socket);
+    sendZMQResponse(resultString, socket);
 }
 
 int main() {
-    //creates the zmq req/rep socket
     zmq::context_t zmqContext(1);
     zmq::socket_t socket(zmqContext, ZMQ_REP);
     socket.bind("tcp://localhost:5000");
-    //while true loop to wait for calls from the client
     while (true) {
+        //try catch to catch any exceptions
         try {
             zmq::message_t request;
             zmq::recv_result_t result = socket.recv(request);
             string requestString = request.to_string();
 
             handleZMQRequest(requestString, socket);
+        //if an exception was thrown send Failure to the client through the ZeroMQ socket
         } catch (const std::exception& e) {
             sendZMQResponse("Failure", socket);
         }
