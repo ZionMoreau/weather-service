@@ -36,9 +36,36 @@ json getWeather(const std::string& location, const bool isZip){
             {"status_code", r.status_code},
             {"status_text", r.text}
         };
+    }
+}
 
+inline void sendZMQResponse(const std::string& response, zmq::socket_t& socket) {
+    zmq::message_t reply(response.begin(), response.end());
+    socket.send(reply);
+}
+
+/* Parse the JSON request from the client for Location Data,
+ * filename, and properly respond to request
+ */
+void handleZMQRequest(const std::string& request, zmq::socket_t& socket) {
+    json jsonRequest = json::parse(request);
+
+    std::string location = jsonRequest["location"];
+    bool isZip = jsonRequest["isZip"];
+    string fileName = jsonRequest["filename"];
+
+    json weather = getWeather(location, isZip);
+
+    ofstream resultFile(fileName);
+    std::string resultString = "Failure";
+    if (resultFile.is_open()) {
+        // Use dump(4) for proper indentation to make JSON file readable
+        resultFile << weather.dump(4);
+        resultString = "Success";
     }
 
+    resultFile.close();
+    sendZMQResponse("Success", socket);
 }
 
 int main() {
@@ -48,46 +75,15 @@ int main() {
     socket.bind("tcp://localhost:5000");
     //while true loop to wait for calls from the client
     while (true) {
-        zmq::message_t request;
-        zmq::recv_result_t result = socket.recv(request);
-        string requestString = request.to_string();
-
-        //try catch to catch any exceptions
         try {
-            //parsing request from the client for a string of the location, a boolean that determines if the location is a zip code or not
-            // and a string that determines the file name that the results will be written to
-            json jsonRequest = json::parse(requestString);
-            string location = jsonRequest["location"];
-            bool isZip = jsonRequest["isZip"];
-            string fileName = jsonRequest["fileName"];
+            zmq::message_t request;
+            zmq::recv_result_t result = socket.recv(request);
+            string requestString = request.to_string();
 
-            //calls the get weather function and stores the results to a json that will be printed to the file.
-            json weather = getWeather(location, isZip);
-
-            //opens a file with the name specified by the client
-            ofstream resultFile(fileName);
-            //if the file opened properly print the weather data to it and send Success to the client over the zeroMQ socket then close the file
-            if (resultFile.is_open()) {
-                //uses .dump(4) for proper indentation to make the json file readable
-                resultFile << weather.dump(4);
-                resultFile.close();
-                string response = "Success";
-                zmq::message_t reply(response.begin(), response.end());
-                socket.send(reply);
-            } else {
-                resultFile.close();
-                string response = "Failure";
-                zmq::message_t reply(response.begin(), response.end());
-                socket.send(reply);
-            }
-        //if an exception was thrown send Failure to the client through the ZeroMQ socket
-        } catch (const std::exception& e){
-            string response = "Failure";
-            zmq::message_t reply(response.begin(), response.end());
-            socket.send(reply);
-
+            handleZMQRequest(requestString, socket);
+        } catch (const std::exception& e) {
+            sendZMQResponse("Failure", socket);
         }
-
     }
 
     return 0;
